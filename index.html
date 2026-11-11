@@ -128,22 +128,6 @@
   <!-- Interactive Floating Petals Canvas -->
   <canvas id="fxCanvas"></canvas>
 
-  <!-- FLOATING MUSIC CONTROLLER -->
-  <div class="fixed top-3 right-3 z-50 flex items-center gap-2 bg-[#2a0409]/90 border border-amber-400/60 backdrop-blur-md px-3.5 py-2 rounded-full shadow-2xl">
-    <button id="musicToggleBtn" onclick="toggleAudio()" class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-200 text-[#30050a] flex items-center justify-center font-bold text-xs shadow-md active:scale-90 transition">
-      <span id="playIcon">▶</span>
-    </button>
-    <div class="flex flex-col text-left">
-      <span class="text-[9px] uppercase tracking-wider text-amber-300/80 font-semibold">Peaceful Melodies</span>
-      <select id="trackSelect" onchange="switchTrack()" class="bg-transparent text-amber-100 text-xs font-medium outline-none cursor-pointer pr-1">
-        <option value="bansuri" class="bg-[#3b050d] text-amber-100">🪈 Serene Flute (Bansuri)</option>
-        <option value="shehnai" class="bg-[#3b050d] text-amber-100">🎺 Peaceful Shehnai</option>
-        <option value="kalyani" class="bg-[#3b050d] text-amber-100">🪘 Kalyan Raga Melody</option>
-        <option value="temple" class="bg-[#3b050d] text-amber-100">🔔 Temple Sanctum Chimes</option>
-      </select>
-    </div>
-  </div>
-
   <!-- STAGE 1: ROYAL TEMPLE DOOR (INTERACTIVE OPENING) -->
   <div id="doorOverlay" class="fixed inset-0 z-40 bg-[#160104] flex flex-col items-center justify-center door-perspective transition-opacity duration-1000">
     
@@ -366,9 +350,9 @@
                 <span>📍</span>
                 <span>Open in Maps</span>
               </a>
-              <button onclick="addGoogleCalendar()" class="py-2.5 px-3 bg-amber-200 hover:bg-amber-300 text-amber-950 border border-amber-400 rounded-xl font-semibold text-xs tracking-wide shadow flex items-center justify-center gap-1.5 transition active:scale-95">
+              <button onclick="addToNativeCalendar()" class="py-2.5 px-3 bg-amber-200 hover:bg-amber-300 text-amber-950 border border-amber-400 rounded-xl font-semibold text-xs tracking-wide shadow flex items-center justify-center gap-1.5 transition active:scale-95">
                 <span>📅</span>
-                <span>Add to Calendar</span>
+                <span>Add Reminder</span>
               </button>
             </div>
 
@@ -429,7 +413,7 @@
       </button>
 
       <div class="p-3 rounded-xl bg-white/5 border border-amber-400/30 text-center text-[11px] text-amber-200/80">
-        💾 <strong>Freely Downloadable & Shareable:</strong> This single file runs on any mobile browser (Chrome/Safari) with zero internet dependency for music and animations.
+        💾 <strong>Freely Downloadable & Shareable:</strong> This single file runs on any mobile browser (Chrome/Safari) with zero internet dependency for animations and reminders.
       </div>
     </div>
 
@@ -439,18 +423,13 @@
 
   </main>
 
-  <!-- JAVASCRIPT: SOUND SYNTHESIZER, DOOR ANIMATION & PARTICLES -->
+  <!-- JAVASCRIPT: DOOR ANIMATION, PARTICLES, CALENDAR REMINDER & SCRATCH -->
   <script>
     // 1. ROYAL TEMPLE DOOR OPEN ANIMATION
     function openRoyalDoor() {
       const doorOverlay = document.getElementById('doorOverlay');
       doorOverlay.classList.add('doors-open');
       
-      // Auto-start audio if user interacted
-      if (!isPlaying) {
-        toggleAudio();
-      }
-
       // Shower initial blessings
       triggerBlessings();
 
@@ -461,127 +440,7 @@
       }, 1000);
     }
 
-    // 2. PEACEFUL INDIAN CLASSICAL AUDIO SYNTHESIZER (Web Audio API - 100% Offline)
-    let audioCtx = null;
-    let isPlaying = false;
-    let sequenceTimer = null;
-    let noteStep = 0;
-
-    // Peaceful Raga Kalyani and Yaman melodic phrases
-    const soundTracks = {
-      bansuri: [
-        { f: 440.00, d: 1.4 }, // A4
-        { f: 493.88, d: 1.1 }, // B4
-        { f: 554.37, d: 1.6 }, // C#5
-        { f: 659.25, d: 2.0 }, // E5
-        { f: 554.37, d: 1.2 }, // C#5
-        { f: 493.88, d: 1.8 }  // B4
-      ],
-      shehnai: [
-        { f: 293.66, d: 0.9 }, // D4
-        { f: 329.63, d: 0.8 }, // E4
-        { f: 369.99, d: 1.0 }, // F#4
-        { f: 440.00, d: 1.4 }, // A4
-        { f: 369.99, d: 0.8 }, // F#4
-        { f: 293.66, d: 1.8 }  // D4
-      ],
-      kalyani: [
-        { f: 329.63, d: 0.7 },
-        { f: 369.99, d: 0.7 },
-        { f: 415.30, d: 0.9 },
-        { f: 493.88, d: 1.2 },
-        { f: 554.37, d: 1.5 },
-        { f: 493.88, d: 0.8 }
-      ],
-      temple: [
-        { f: 523.25, d: 2.2 }, // C5
-        { f: 659.25, d: 2.4 }, // E5
-        { f: 783.99, d: 2.8 }, // G5
-        { f: 1046.50, d: 3.2 } // C6
-      ]
-    };
-
-    function playSynthesizedNote(freq, dur, type) {
-      if (!audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      const filter = audioCtx.createBiquadFilter();
-
-      if (type === 'bansuri') {
-        osc.type = 'sine';
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
-      } else if (type === 'shehnai' || type === 'kalyani') {
-        osc.type = 'sawtooth';
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(1400, audioCtx.currentTime);
-        filter.Q.setValueAtTime(3.5, audioCtx.currentTime);
-      } else { // Temple Chimes
-        osc.type = 'triangle';
-        filter.type = 'highpass';
-        filter.frequency.setValueAtTime(300, audioCtx.currentTime);
-      }
-
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      // Gentle Gamaka pitch modulation for Indian classical resonance
-      if (type === 'bansuri' || type === 'shehnai') {
-        osc.frequency.exponentialRampToValueAtTime(freq * 1.015, audioCtx.currentTime + dur * 0.3);
-      }
-
-      // Smooth envelope attack and release
-      gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-      const targetVol = type === 'bansuri' ? 0.12 : (type === 'shehnai' ? 0.08 : 0.10);
-      gain.gain.linearRampToValueAtTime(targetVol, audioCtx.currentTime + 0.15);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      osc.start();
-      osc.stop(audioCtx.currentTime + dur);
-    }
-
-    function runMusicLoop() {
-      if (!isPlaying) return;
-      const currentTrack = document.getElementById('trackSelect').value;
-      const notes = soundTracks[currentTrack] || soundTracks.bansuri;
-      const item = notes[noteStep % notes.length];
-
-      playSynthesizedNote(item.f, item.d, currentTrack);
-      noteStep++;
-
-      sequenceTimer = setTimeout(runMusicLoop, item.d * 820);
-    }
-
-    function toggleAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-
-      isPlaying = !isPlaying;
-      const playIcon = document.getElementById('playIcon');
-      if (isPlaying) {
-        playIcon.textContent = '❚❚';
-        runMusicLoop();
-      } else {
-        playIcon.textContent = '▶';
-        clearTimeout(sequenceTimer);
-      }
-    }
-
-    function switchTrack() {
-      noteStep = 0;
-      if (isPlaying) {
-        clearTimeout(sequenceTimer);
-        runMusicLoop();
-      }
-    }
-
-    // 3. CANVAS FALLING MARIGOLD PETALS
+    // 2. CANVAS FALLING MARIGOLD PETALS
     const canvas = document.getElementById('fxCanvas');
     const ctx = canvas.getContext('2d');
     let width = canvas.width = window.innerWidth;
@@ -648,7 +507,7 @@
     }
     requestAnimationFrame(renderCanvas);
 
-    // 4. SHOWER AKSHATHALU / FLOWER BLESSINGS
+    // 3. SHOWER AKSHATHALU / FLOWER BLESSINGS
     function triggerBlessings() {
       if (typeof confetti === 'function') {
         confetti({
@@ -676,7 +535,7 @@
       }
     }
 
-    // 5. INTERACTIVE TOUCH SCRATCH REVEAL CARD
+    // 4. INTERACTIVE TOUCH SCRATCH REVEAL CARD
     const scratchCanvas = document.getElementById('scratchCanvas');
     const sCtx = scratchCanvas.getContext('2d');
     let isScratching = false;
@@ -728,18 +587,49 @@
       initScratchCard();
     });
 
-    // 6. GOOGLE CALENDAR INTEGRATION
-    function addGoogleCalendar() {
-      const title = encodeURIComponent("Wedding: Sanju Naik & Ashwini Rathod");
-      const dates = "20261122T040100Z/20261122T083000Z"; // 9:31 AM IST to 2:00 PM IST
-      const details = encodeURIComponent("Sumuhurtham: Sunday, 22nd Nov 2026 at 9:31 AM (Dhanur Lagnam).\nVenue: Sri Balaji Gardens, Ramchandrapuram, Hyderabad.\nInvited by Sri Amgoth Haria.");
-      const location = encodeURIComponent("Sri Balaji Gardens, Beside D-Mart, Ramchandrapuram, Hyderabad, Telangana");
-      
-      const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
-      window.open(gcalUrl, '_blank');
+    // 5. DIRECT NATIVE CALENDAR REMINDER (.ICS FOR APPLE & ANDROID)
+    function addToNativeCalendar() {
+      const icsData = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Sanju and Ashwini Wedding//EN',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'BEGIN:VEVENT',
+        'UID:wedding-sanju-ashwini-20261122@invitation',
+        'DTSTAMP:20261111T120000Z',
+        'DTSTART:20261122T040100Z',
+        'DTEND:20261122T083000Z',
+        'SUMMARY:Wedding: Sanju & Ashwini',
+        'DESCRIPTION:Auspicious Wedding Ceremony of Chi. Sanju Naik with Chi. La. Sow. Ashwini Rathod. Sumuhurtham at 9:31 AM (Dhanur Lagnam). Contact: 9849668796 / 9949157796.',
+        'LOCATION:Sri Balaji Gardens\, Beside D-Mart\, Ramchandrapuram\, Hyderabad\, Telangana',
+        'STATUS:CONFIRMED',
+        'BEGIN:VALARM',
+        'TRIGGER:-PT12H',
+        'ACTION:DISPLAY',
+        'DESCRIPTION:Reminder: Wedding of Sanju & Ashwini today at 9:31 AM',
+        'END:VALARM',
+        'BEGIN:VALARM',
+        'TRIGGER:-PT2H',
+        'ACTION:DISPLAY',
+        'DESCRIPTION:Wedding of Sanju & Ashwini starts in 2 hours at Sri Balaji Gardens',
+        'END:VALARM',
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].join('\r\n');
+
+      const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'wedding-sanju-ashwini.ics');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     }
 
-    // 7. DIRECT WHATSAPP SHARING
+    // 6. DIRECT WHATSAPP SHARING
     function shareWhatsApp() {
       const message = encodeURIComponent(
         "✨ *॥ శ్రీరస్తు • శుభమస్తు • అవిఘ్నమస్తు ॥* ✨\n\n" +
