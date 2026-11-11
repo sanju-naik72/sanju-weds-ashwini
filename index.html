@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Wedding Invitation | Sanju & Ashwini</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@600;700;900&family=Great+Vibes&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti for Blessings -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --gold-primary: #d4af37;
+      --gold-light: #fae7a5;
+      --gold-dark: #8c6d1f;
+      --maroon-deep: #2a0308;
+      --maroon-royal: #4e0610;
+      --parchment: #fffaf0;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 25%, #46050e 0%, #200206 65%, #100003 100%);
+      color: #fff8ea;
+      font-family: 'Poppins', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    .font-cinzel { font-family: 'Cinzel Decorative', serif; }
+    .font-script { font-family: 'Great Vibes', cursive; }
+    .font-serif-royal { font-family: 'Playfair Display', serif; }
+
+    /* Gold foil shimmer text */
+    .gold-foil {
+      background: linear-gradient(135deg, #ffeaa7 0%, #d4af37 45%, #f9f0b8 65%, #947219 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+    }
+
+    .gold-border-gradient {
+      border-image: linear-gradient(to bottom right, #ffeaa7, #d4af37, #846114) 1;
+    }
+
+    /* Temple Door 3D Open Effect */
+    .door-perspective {
+      perspective: 1200px;
+    }
+    .door-leaf-left {
+      transform-origin: left center;
+      transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .door-leaf-right {
+      transform-origin: right center;
+      transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .doors-open .door-leaf-left {
+      transform: rotateY(-110deg);
+    }
+    .doors-open .door-leaf-right {
+      transform: rotateY(110deg);
+    }
+
+    /* Parchment Paper Appearance */
+    .parchment-sheet {
+      background: #fffcf5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" opacity="0.035"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)"/></svg>');
+      box-shadow: 0 20px 45px rgba(0,0,0,0.7), inset 0 0 60px rgba(184, 134, 11, 0.12);
+    }
+
+    /* Traditional Diya flame flicker */
+    @keyframes flame-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.9; filter: drop-shadow(0 0 8px #ffb300); }
+      50% { transform: scale(1.18) translateY(-2px); opacity: 1; filter: drop-shadow(0 0 16px #ff7300); }
+    }
+    .diya-flame {
+      animation: flame-pulse 1.8s infinite ease-in-out;
+    }
+
+    /* Gentle Floating Animation */
+    @keyframes gentle-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .gentle-float {
+      animation: gentle-float 3s infinite ease-in-out;
+    }
+
+    /* Interactive scratch/reveal card */
+    .scratch-surface {
+      touch-action: none;
+    }
+
+    /* Petals canvas */
+    #fxCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    /* Native pulse button glow */
+    @keyframes glow-gold {
+      0%, 100% { box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+      50% { box-shadow: 0 0 28px rgba(212, 175, 55, 0.85); }
+    }
+    .glow-gold {
+      animation: glow-gold 2.2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="relative flex flex-col items-center justify-start min-h-screen">
+
+  <!-- Interactive Floating Petals Canvas -->
+  <canvas id="fxCanvas"></canvas>
+
+  <!-- FLOATING MUSIC CONTROLLER -->
+  <div class="fixed top-3 right-3 z-50 flex items-center gap-2 bg-[#2a0409]/90 border border-amber-400/60 backdrop-blur-md px-3.5 py-2 rounded-full shadow-2xl">
+    <button id="musicToggleBtn" onclick="toggleAudio()" class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-200 text-[#30050a] flex items-center justify-center font-bold text-xs shadow-md active:scale-90 transition">
+      <span id="playIcon">▶</span>
+    </button>
+    <div class="flex flex-col text-left">
+      <span class="text-[9px] uppercase tracking-wider text-amber-300/80 font-semibold">Peaceful Melodies</span>
+      <select id="trackSelect" onchange="switchTrack()" class="bg-transparent text-amber-100 text-xs font-medium outline-none cursor-pointer pr-1">
+        <option value="bansuri" class="bg-[#3b050d] text-amber-100">🪈 Serene Flute (Bansuri)</option>
+        <option value="shehnai" class="bg-[#3b050d] text-amber-100">🎺 Peaceful Shehnai</option>
+        <option value="kalyani" class="bg-[#3b050d] text-amber-100">🪘 Kalyan Raga Melody</option>
+        <option value="temple" class="bg-[#3b050d] text-amber-100">🔔 Temple Sanctum Chimes</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- STAGE 1: ROYAL TEMPLE DOOR (INTERACTIVE OPENING) -->
+  <div id="doorOverlay" class="fixed inset-0 z-40 bg-[#160104] flex flex-col items-center justify-center door-perspective transition-opacity duration-1000">
+    
+    <!-- Toran / Auspicious Garlands across the top -->
+    <div class="absolute top-0 w-full flex justify-center pointer-events-none z-30">
+      <svg class="w-full max-w-md h-12" viewBox="0 0 360 40" fill="none">
+        <path d="M0,0 Q90,35 180,0 Q270,35 360,0" stroke="#f59e0b" stroke-width="3" fill="#b45309" fill-opacity="0.25"/>
+        <circle cx="90" cy="19" r="6" fill="#ea580c"/>
+        <circle cx="180" cy="5" r="7" fill="#fbbf24"/>
+        <circle cx="270" cy="19" r="6" fill="#ea580c"/>
+      </svg>
+    </div>
+
+    <!-- Sacred Vedic Blessing on Door Frame -->
+    <div class="text-center mb-6 z-20 px-4">
+      <p class="text-xs sm:text-sm tracking-widest text-amber-300 font-semibold uppercase">॥ శ్రీరస్తు • శుభమస్తు • అవిఘ్నమస్తు ॥</p>
+      <h2 class="text-2xl sm:text-3xl font-cinzel text-amber-100 font-bold mt-1">Sanju & Ashwini</h2>
+      <p class="text-xs text-amber-200/70 italic mt-0.5">Inviting you into our sacred beginnings</p>
+    </div>
+
+    <!-- The 3D Wooden Carved Doors Container -->
+    <div id="doorsFrame" class="relative w-[320px] sm:w-[360px] h-[480px] sm:h-[520px] rounded-t-full border-4 border-amber-500/70 bg-[#250308] shadow-[0_0_50px_rgba(212,175,55,0.4)] overflow-hidden flex cursor-pointer" onclick="openRoyalDoor()">
+      
+      <!-- Door Arch Crest Ganesha -->
+      <div class="absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex flex-col items-center">
+        <div class="w-14 h-14 rounded-full bg-amber-950/80 border border-amber-400 flex items-center justify-center p-2 shadow-lg">
+          <svg class="w-10 h-10 fill-amber-300" viewBox="0 0 100 100">
+            <path d="M50 15 C42 15 36 21 36 29 C36 34 39 38 43 41 C37 43 31 49 31 57 C31 67 39 74 48 75 C47 80 43 83 38 84 C47 87 56 83 58 75 C68 74 74 66 74 57 C74 48 68 43 62 41 C65 38 68 34 68 29 C68 21 62 15 54 15 Z M50 21 C54 21 58 24 58 29 C58 34 54 37 50 37 C46 37 42 34 42 29 C42 24 46 21 50 21 Z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Left Door Leaf -->
+      <div class="door-leaf-left w-1/2 h-full bg-gradient-to-br from-[#4a1c0d] via-[#2c0e04] to-[#1a0802] border-r-2 border-amber-500/50 relative flex flex-col justify-center items-end p-4 shadow-2xl">
+        <!-- Wood Carving Panels -->
+        <div class="w-full h-[85%] border-2 border-amber-500/40 rounded-tl-[70px] rounded-bl-xl p-3 flex flex-col justify-between bg-amber-950/20">
+          <div class="w-8 h-8 rounded-full border border-amber-400/40 self-center"></div>
+          <!-- Left Brass Handle -->
+          <div class="w-4 h-16 bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-600 rounded-full border border-amber-950 shadow-lg self-end mr-1 flex items-center justify-center">
+            <div class="w-2 h-2 rounded-full bg-amber-900"></div>
+          </div>
+          <!-- Carved Lotus motif -->
+          <div class="text-amber-400/50 text-xl text-center">🪷</div>
+        </div>
+      </div>
+
+      <!-- Right Door Leaf -->
+      <div class="door-leaf-right w-1/2 h-full bg-gradient-to-bl from-[#4a1c0d] via-[#2c0e04] to-[#1a0802] border-l-2 border-amber-500/50 relative flex flex-col justify-center items-start p-4 shadow-2xl">
+        <!-- Wood Carving Panels -->
+        <div class="w-full h-[85%] border-2 border-amber-500/40 rounded-tr-[70px] rounded-br-xl p-3 flex flex-col justify-between bg-amber-950/20">
+          <div class="w-8 h-8 rounded-full border border-amber-400/40 self-center"></div>
+          <!-- Right Brass Handle -->
+          <div class="w-4 h-16 bg-gradient-to-l from-amber-300 via-yellow-200 to-amber-600 rounded-full border border-amber-950 shadow-lg self-start ml-1 flex items-center justify-center">
+            <div class="w-2 h-2 rounded-full bg-amber-900"></div>
+          </div>
+          <!-- Carved Lotus motif -->
+          <div class="text-amber-400/50 text-xl text-center">🪷</div>
+        </div>
+      </div>
+
+      <!-- Glowing Tap Instruction -->
+      <div class="absolute bottom-6 left-0 right-0 z-30 text-center pointer-events-none">
+        <span class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-amber-500 text-[#2a0409] font-bold text-xs uppercase tracking-widest shadow-xl glow-gold animate-bounce">
+          <span>✨ Tap Doors to Open ✨</span>
+        </span>
+      </div>
+
+    </div>
+
+    <!-- Subtitle bottom -->
+    <p class="text-[11px] text-amber-300/60 mt-4 tracking-widest uppercase">Wedding of Sanju & Ashwini • 22nd Nov 2026</p>
+  </div>
+
+  <!-- STAGE 2: ROYAL SCROLL INVITATION (MAIN BODY) -->
+  <main class="w-full max-w-md mx-auto px-4 pt-16 pb-28 flex flex-col items-center z-10">
+
+    <!-- Top Auspicious Invocation Header -->
+    <div class="text-center space-y-1 mb-5">
+      <div class="text-xs tracking-widest text-amber-300 uppercase font-semibold">
+        ॥ శ్రీరస్తు • శుభమస్తు • అవిఘ్నమస్తు ॥
+      </div>
+      <p class="text-[11px] text-amber-200/70 tracking-widest">Srirasthu • Shubhamasthu • Avighnamasthu</p>
+    </div>
+
+    <!-- The Scroll Container with Finials -->
+    <div class="w-full relative shadow-2xl">
+
+      <!-- Top Golden Roller Bar -->
+      <div class="w-[106%] -ml-[3%] h-7 bg-gradient-to-r from-amber-700 via-yellow-300 to-amber-800 rounded-full border border-amber-200 shadow-xl flex items-center justify-between px-3 z-20 relative">
+        <div class="w-4 h-4 rounded-full bg-amber-950 border border-yellow-200"></div>
+        <span class="text-[10px] uppercase font-bold tracking-widest text-amber-950 font-cinzel">Sri Rama Jayam</span>
+        <div class="w-4 h-4 rounded-full bg-amber-950 border border-yellow-200"></div>
+      </div>
+
+      <!-- Main Unrolled Parchment Sheet -->
+      <div class="parchment-sheet text-[#2d1b0f] px-5 sm:px-7 py-8 border-x-4 border-amber-600/40 relative">
+        
+        <!-- Ornate Border Enclosure -->
+        <div class="border-2 border-amber-600/50 p-4 sm:p-5 relative bg-white/40 rounded-xl">
+          
+          <!-- Ornate Corner Motifs -->
+          <span class="absolute -top-2.5 -left-2 text-amber-600 text-sm">✤</span>
+          <span class="absolute -top-2.5 -right-2 text-amber-600 text-sm">✤</span>
+          <span class="absolute -bottom-2.5 -left-2 text-amber-600 text-sm">✤</span>
+          <span class="absolute -bottom-2.5 -right-2 text-amber-600 text-sm">✤</span>
+
+          <!-- Divine Emblem (Lord Vigneshwara) -->
+          <div class="w-16 h-16 mx-auto mb-3 flex items-center justify-center rounded-full bg-amber-100 border border-amber-300 shadow-inner">
+            <svg class="w-11 h-11 fill-[#800d1b]" viewBox="0 0 100 100">
+              <path d="M50 15 C42 15 36 21 36 29 C36 34 39 38 43 41 C37 43 31 49 31 57 C31 67 39 74 48 75 C47 80 43 83 38 84 C47 87 56 83 58 75 C68 74 74 66 74 57 C74 48 68 43 62 41 C65 38 68 34 68 29 C68 21 62 15 54 15 Z M50 21 C54 21 58 24 58 29 C58 34 54 37 50 37 C46 37 42 34 42 29 C42 24 46 21 50 21 Z M50 43 C58 43 64 49 64 57 C64 64 58 70 50 70 C42 70 36 64 36 57 C36 49 42 43 50 43 Z"/>
+            </svg>
+          </div>
+
+          <!-- Invitation Verse -->
+          <div class="text-center space-y-1 mb-5">
+            <p class="font-serif-royal italic text-sm text-stone-700 leading-relaxed">
+              We solicit your gracious presence with family & friends on the auspicious occasion of the marriage of our son
+            </p>
+          </div>
+
+          <!-- Groom & Bride Details -->
+          <div class="text-center space-y-3 my-6">
+            
+            <!-- Groom -->
+            <div>
+              <span class="text-[10px] uppercase font-bold tracking-widest text-amber-800">Chi.</span>
+              <h1 class="text-2xl sm:text-3xl font-cinzel font-bold text-[#6b0b17] leading-tight">
+                Sanju Naik
+              </h1>
+              <p class="text-xs text-stone-600 font-serif-royal italic mt-0.5">
+                Son of Sri Amgoth Haria & Late Smt. Amgoth Laxmi
+              </p>
+            </div>
+
+            <!-- Sacred Knot Knotting -->
+            <div class="flex items-center justify-center gap-3 py-1">
+              <div class="h-[1px] w-14 bg-gradient-to-r from-transparent to-amber-500"></div>
+              <div class="font-script text-3xl text-amber-700 font-bold">with</div>
+              <div class="h-[1px] w-14 bg-gradient-to-l from-transparent to-amber-500"></div>
+            </div>
+
+            <!-- Bride -->
+            <div>
+              <span class="text-[10px] uppercase font-bold tracking-widest text-amber-800">Chi. La. Sow.</span>
+              <h2 class="text-2xl sm:text-3xl font-cinzel font-bold text-[#6b0b17] leading-tight">
+                Ashwini Rathod
+              </h2>
+              <p class="text-xs text-stone-600 font-serif-royal italic mt-0.5">
+                Youngest Daughter of Smt. Anusha Rathod & Sri Kesu Singh Rathod
+              </p>
+            </div>
+
+          </div>
+
+          <!-- SUMUHURTHAM HIGHLIGHT BOX -->
+          <div class="my-6 p-4 rounded-xl bg-gradient-to-b from-amber-50 to-orange-50 border border-amber-300 text-center shadow-sm">
+            <p class="text-xs uppercase font-bold tracking-widest text-[#8b1424]">Sumuhurtham</p>
+            <div class="text-xl sm:text-2xl font-bold font-serif-royal text-stone-900 mt-1">
+              Sunday, 22nd November 2026
+            </div>
+            <div class="text-sm font-semibold text-amber-900 mt-0.5">
+              at 9:31 AM
+            </div>
+            <div class="inline-block mt-1 px-3 py-0.5 rounded-full bg-amber-200/70 border border-amber-400 text-xs font-serif-royal italic text-amber-950">
+              "Dhanur Lagnam"
+            </div>
+          </div>
+
+          <!-- CEREMONIES TIMELINE ACCORDION / BADGES -->
+          <div class="my-5 space-y-2">
+            <p class="text-[11px] uppercase tracking-wider font-bold text-center text-amber-900">Celebration Schedule</p>
+            <div class="grid grid-cols-2 gap-2 text-center text-xs">
+              <div class="p-2.5 rounded-lg bg-yellow-50/90 border border-amber-200">
+                <span class="text-amber-800 font-bold block text-[11px]">Haldi Utsav</span>
+                <span class="text-stone-700 text-[10px] block">21st Nov 2026</span>
+                <span class="text-stone-500 text-[9px] block">7:00 PM Onwards</span>
+              </div>
+              <div class="p-2.5 rounded-lg bg-red-50/90 border border-red-200">
+                <span class="text-red-900 font-bold block text-[11px]">Lagna Mahotsavam</span>
+                <span class="text-stone-700 text-[10px] block">22nd Nov 2026</span>
+                <span class="text-stone-500 text-[9px] block">9:31 AM (Muhurtham)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- INTERACTIVE SCRATCH / BLESSING REVEAL CARD -->
+          <div class="my-6 p-3 rounded-xl bg-amber-100/60 border border-amber-300 text-center">
+            <span class="text-xs font-bold text-amber-900 block mb-1">🎁 Interactive Touch: Reveal Special Note</span>
+            <div id="scratchContainer" class="relative w-full h-24 rounded-lg overflow-hidden bg-amber-50 border border-amber-300 flex items-center justify-center p-3 select-none">
+              <!-- Hidden Content Behind Scratch -->
+              <div class="text-center">
+                <p class="font-script text-xl text-red-900 font-bold">"Two souls, one sacred path"</p>
+                <p class="text-[10px] text-stone-700 mt-1">Your presence and heartfelt blessings make our wedding complete!</p>
+              </div>
+              <!-- Scratch Canvas Overlay -->
+              <canvas id="scratchCanvas" class="scratch-surface absolute inset-0 w-full h-full cursor-pointer"></canvas>
+            </div>
+            <p class="text-[9px] text-stone-500 mt-1">Rub or tap above with your finger to scratch & reveal</p>
+          </div>
+
+          <!-- VENUE & GPS NAVIGATION -->
+          <div class="my-6 text-center space-y-3">
+            <div>
+              <span class="text-[10px] uppercase font-bold tracking-widest text-amber-800">Wedding Venue</span>
+              <h3 class="text-xl font-bold font-serif-royal text-[#6b0b17] mt-0.5">Sri Balaji Gardens</h3>
+              <p class="text-xs text-stone-700 max-w-xs mx-auto leading-relaxed mt-0.5">
+                Beside D-Mart, Ramchandrapuram, Hyderabad, Telangana
+              </p>
+            </div>
+
+            <!-- Direct Location QR Code -->
+            <div class="inline-block p-2.5 bg-white border-2 border-amber-400 rounded-xl shadow-md">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fmaps.google.com%2F%3Fq%3DSri%2BBalaji%2BGardens%2BRamchandrapuram%2BHyderabad" alt="Sri Balaji Gardens QR Code" class="w-32 h-32 mx-auto rounded" onerror="this.onerror=null; this.src='https://placehold.co/180x180/fffaf0/4e0610?text=Scan+Venue';">
+              <span class="block text-[10px] text-amber-900 font-bold mt-1.5 uppercase">Scan for Google Map Navigation</span>
+            </div>
+
+            <!-- Action Buttons Grid -->
+            <div class="grid grid-cols-2 gap-2 pt-2">
+              <a href="https://maps.google.com/?q=Sri+Balaji+Gardens+Ramchandrapuram+Hyderabad" target="_blank" rel="noopener noreferrer" class="py-2.5 px-3 bg-[#6b0b17] hover:bg-[#520710] text-amber-100 rounded-xl font-semibold text-xs tracking-wide shadow flex items-center justify-center gap-1.5 transition active:scale-95">
+                <span>📍</span>
+                <span>Open in Maps</span>
+              </a>
+              <button onclick="addGoogleCalendar()" class="py-2.5 px-3 bg-amber-200 hover:bg-amber-300 text-amber-950 border border-amber-400 rounded-xl font-semibold text-xs tracking-wide shadow flex items-center justify-center gap-1.5 transition active:scale-95">
+                <span>📅</span>
+                <span>Add to Calendar</span>
+              </button>
+            </div>
+
+            <!-- Blessing Button -->
+            <button onclick="triggerBlessings()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-amber-950 font-bold text-xs uppercase tracking-wider shadow-lg hover:brightness-105 active:scale-95 transition flex items-center justify-center gap-2">
+              <span>🌾</span>
+              <span>Shower Akshathalu & Flowers</span>
+              <span>🌺</span>
+            </button>
+          </div>
+
+          <!-- INVITATION HOSTS & COMPLIMENTS -->
+          <div class="border-t border-amber-400/50 pt-5 mt-5 text-center space-y-3">
+            <div>
+              <p class="text-[10px] uppercase font-bold tracking-widest text-amber-800">Invited With Love By</p>
+              <h4 class="text-base font-bold font-serif-royal text-[#6b0b17]">Sri Amgoth Haria</h4>
+              <p class="text-xs text-stone-600 italic">(Late Smt. Amgoth Laxmi)</p>
+            </div>
+
+            <!-- Direct Host Call Support -->
+            <div class="flex items-center justify-center gap-2 pt-1">
+              <a href="tel:+919849668796" class="px-3 py-1.5 rounded-full bg-amber-100 border border-amber-400 text-xs font-semibold text-amber-950 shadow-sm active:scale-95">
+                📞 9849668796
+              </a>
+              <a href="tel:+919949157796" class="px-3 py-1.5 rounded-full bg-amber-100 border border-amber-400 text-xs font-semibold text-amber-950 shadow-sm active:scale-95">
+                📞 9949157796
+              </a>
+            </div>
+
+            <!-- Compliments -->
+            <div class="pt-2 text-stone-700">
+              <p class="text-[9px] uppercase font-bold tracking-widest text-amber-900 mb-1">With Best Compliments From</p>
+              <p class="text-xs leading-relaxed font-medium">
+                Kamdhar - Hemli, Nanu - Chavli,<br>
+                Chandru - Panni, Suryam - Sakri<br>
+                <span class="font-bold text-[#6b0b17]">& Near & Dear</span>
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Bottom Golden Roller Bar -->
+      <div class="w-[106%] -ml-[3%] h-7 bg-gradient-to-r from-amber-700 via-yellow-300 to-amber-800 rounded-full border border-amber-200 shadow-xl flex items-center justify-between px-3 z-20 relative">
+        <div class="w-4 h-4 rounded-full bg-amber-950 border border-yellow-200"></div>
+        <span class="text-[10px] uppercase font-bold tracking-widest text-amber-950 font-cinzel">Shubhamasthu</span>
+        <div class="w-4 h-4 rounded-full bg-amber-950 border border-yellow-200"></div>
+      </div>
+
+    </div>
+
+    <!-- WHATSAPP SHARE & OFFLINE SAVE BAR -->
+    <div class="w-full mt-6 space-y-2.5">
+      <button onclick="shareWhatsApp()" class="w-full py-3.5 px-5 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 active:scale-95 transition">
+        <span>💬</span>
+        <span>Share Invitation on WhatsApp</span>
+      </button>
+
+      <div class="p-3 rounded-xl bg-white/5 border border-amber-400/30 text-center text-[11px] text-amber-200/80">
+        💾 <strong>Freely Downloadable & Shareable:</strong> This single file runs on any mobile browser (Chrome/Safari) with zero internet dependency for music and animations.
+      </div>
+    </div>
+
+    <footer class="mt-8 text-center text-[10px] text-amber-300/50">
+      <p>Sri Gampa Card Agencies, Hyd. • Made with love for Sanju & Ashwini</p>
+    </footer>
+
+  </main>
+
+  <!-- JAVASCRIPT: SOUND SYNTHESIZER, DOOR ANIMATION & PARTICLES -->
+  <script>
+    // 1. ROYAL TEMPLE DOOR OPEN ANIMATION
+    function openRoyalDoor() {
+      const doorOverlay = document.getElementById('doorOverlay');
+      doorOverlay.classList.add('doors-open');
+      
+      // Auto-start audio if user interacted
+      if (!isPlaying) {
+        toggleAudio();
+      }
+
+      // Shower initial blessings
+      triggerBlessings();
+
+      // Fade out and remove overlay from view
+      setTimeout(() => {
+        doorOverlay.style.opacity = '0';
+        doorOverlay.style.pointerEvents = 'none';
+      }, 1000);
+    }
+
+    // 2. PEACEFUL INDIAN CLASSICAL AUDIO SYNTHESIZER (Web Audio API - 100% Offline)
+    let audioCtx = null;
+    let isPlaying = false;
+    let sequenceTimer = null;
+    let noteStep = 0;
+
+    // Peaceful Raga Kalyani and Yaman melodic phrases
+    const soundTracks = {
+      bansuri: [
+        { f: 440.00, d: 1.4 }, // A4
+        { f: 493.88, d: 1.1 }, // B4
+        { f: 554.37, d: 1.6 }, // C#5
+        { f: 659.25, d: 2.0 }, // E5
+        { f: 554.37, d: 1.2 }, // C#5
+        { f: 493.88, d: 1.8 }  // B4
+      ],
+      shehnai: [
+        { f: 293.66, d: 0.9 }, // D4
+        { f: 329.63, d: 0.8 }, // E4
+        { f: 369.99, d: 1.0 }, // F#4
+        { f: 440.00, d: 1.4 }, // A4
+        { f: 369.99, d: 0.8 }, // F#4
+        { f: 293.66, d: 1.8 }  // D4
+      ],
+      kalyani: [
+        { f: 329.63, d: 0.7 },
+        { f: 369.99, d: 0.7 },
+        { f: 415.30, d: 0.9 },
+        { f: 493.88, d: 1.2 },
+        { f: 554.37, d: 1.5 },
+        { f: 493.88, d: 0.8 }
+      ],
+      temple: [
+        { f: 523.25, d: 2.2 }, // C5
+        { f: 659.25, d: 2.4 }, // E5
+        { f: 783.99, d: 2.8 }, // G5
+        { f: 1046.50, d: 3.2 } // C6
+      ]
+    };
+
+    function playSynthesizedNote(freq, dur, type) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+
+      if (type === 'bansuri') {
+        osc.type = 'sine';
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
+      } else if (type === 'shehnai' || type === 'kalyani') {
+        osc.type = 'sawtooth';
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1400, audioCtx.currentTime);
+        filter.Q.setValueAtTime(3.5, audioCtx.currentTime);
+      } else { // Temple Chimes
+        osc.type = 'triangle';
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(300, audioCtx.currentTime);
+      }
+
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      // Gentle Gamaka pitch modulation for Indian classical resonance
+      if (type === 'bansuri' || type === 'shehnai') {
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.015, audioCtx.currentTime + dur * 0.3);
+      }
+
+      // Smooth envelope attack and release
+      gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      const targetVol = type === 'bansuri' ? 0.12 : (type === 'shehnai' ? 0.08 : 0.10);
+      gain.gain.linearRampToValueAtTime(targetVol, audioCtx.currentTime + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + dur);
+    }
+
+    function runMusicLoop() {
+      if (!isPlaying) return;
+      const currentTrack = document.getElementById('trackSelect').value;
+      const notes = soundTracks[currentTrack] || soundTracks.bansuri;
+      const item = notes[noteStep % notes.length];
+
+      playSynthesizedNote(item.f, item.d, currentTrack);
+      noteStep++;
+
+      sequenceTimer = setTimeout(runMusicLoop, item.d * 820);
+    }
+
+    function toggleAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      isPlaying = !isPlaying;
+      const playIcon = document.getElementById('playIcon');
+      if (isPlaying) {
+        playIcon.textContent = '❚❚';
+        runMusicLoop();
+      } else {
+        playIcon.textContent = '▶';
+        clearTimeout(sequenceTimer);
+      }
+    }
+
+    function switchTrack() {
+      noteStep = 0;
+      if (isPlaying) {
+        clearTimeout(sequenceTimer);
+        runMusicLoop();
+      }
+    }
+
+    // 3. CANVAS FALLING MARIGOLD PETALS
+    const canvas = document.getElementById('fxCanvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const petals = [];
+    const petalColors = ['#f59e0b', '#fbbf24', '#f43f5e', '#fef08a', '#ea580c'];
+
+    class FallingPetal {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * -height;
+        this.size = Math.random() * 6 + 5;
+        this.speedY = Math.random() * 1.5 + 0.9;
+        this.speedX = Math.sin(Math.random() * 3) * 0.8;
+        this.rotation = Math.random() * 360;
+        this.rotSpeed = Math.random() * 2 - 1;
+        this.color = petalColors[Math.floor(Math.random() * petalColors.length)];
+        this.opacity = Math.random() * 0.6 + 0.35;
+      }
+      update() {
+        this.y += this.speedY;
+        this.x += this.speedX + Math.sin(this.y * 0.01) * 0.4;
+        this.rotation += this.rotSpeed;
+        if (this.y > height + 20) {
+          this.reset();
+          this.y = -10;
+        }
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate((this.rotation * Math.PI) / 180);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.opacity;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size, this.size * 0.55, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < 26; i++) {
+      const p = new FallingPetal();
+      p.y = Math.random() * height;
+      petals.push(p);
+    }
+
+    function renderCanvas() {
+      ctx.clearRect(0, 0, width, height);
+      petals.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(renderCanvas);
+    }
+    requestAnimationFrame(renderCanvas);
+
+    // 4. SHOWER AKSHATHALU / FLOWER BLESSINGS
+    function triggerBlessings() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 60,
+          spread: 60,
+          origin: { y: 0.6 },
+          colors: ['#facc15', '#f59e0b', '#f43f5e', '#ffffff']
+        });
+        setTimeout(() => {
+          confetti({
+            particleCount: 40,
+            angle: 60,
+            spread: 50,
+            origin: { x: 0 },
+            colors: ['#facc15', '#fbbf24', '#f87171']
+          });
+          confetti({
+            particleCount: 40,
+            angle: 120,
+            spread: 50,
+            origin: { x: 1 },
+            colors: ['#facc15', '#fbbf24', '#f87171']
+          });
+        }, 200);
+      }
+    }
+
+    // 5. INTERACTIVE TOUCH SCRATCH REVEAL CARD
+    const scratchCanvas = document.getElementById('scratchCanvas');
+    const sCtx = scratchCanvas.getContext('2d');
+    let isScratching = false;
+
+    function initScratchCard() {
+      scratchCanvas.width = scratchCanvas.offsetWidth;
+      scratchCanvas.height = scratchCanvas.offsetHeight;
+
+      // Draw Gold Foil coating with text
+      const grad = sCtx.createLinearGradient(0, 0, scratchCanvas.width, scratchCanvas.height);
+      grad.addColorStop(0, '#f6d365');
+      grad.addColorStop(0.5, '#d4af37');
+      grad.addColorStop(1, '#9b7824');
+      sCtx.fillStyle = grad;
+      sCtx.fillRect(0, 0, scratchCanvas.width, scratchCanvas.height);
+
+      sCtx.fillStyle = '#420b12';
+      sCtx.font = 'bold 12px Poppins, sans-serif';
+      sCtx.textAlign = 'center';
+      sCtx.textBaseline = 'middle';
+      sCtx.fillText('✨ Rub with Finger to Reveal ✨', scratchCanvas.width / 2, scratchCanvas.height / 2);
+    }
+
+    function scratchAt(x, y) {
+      sCtx.globalCompositeOperation = 'destination-out';
+      sCtx.beginPath();
+      sCtx.arc(x, y, 18, 0, Math.PI * 2);
+      sCtx.fill();
+    }
+
+    function getCoords(e) {
+      const rect = scratchCanvas.getBoundingClientRect();
+      const touch = e.touches ? e.touches[0] : e;
+      return {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+    }
+
+    scratchCanvas.addEventListener('mousedown', (e) => { isScratching = true; const c = getCoords(e); scratchAt(c.x, c.y); });
+    scratchCanvas.addEventListener('mousemove', (e) => { if (isScratching) { const c = getCoords(e); scratchAt(c.x, c.y); } });
+    window.addEventListener('mouseup', () => { isScratching = false; });
+
+    scratchCanvas.addEventListener('touchstart', (e) => { isScratching = true; const c = getCoords(e); scratchAt(c.x, c.y); }, { passive: false });
+    scratchCanvas.addEventListener('touchmove', (e) => { if (isScratching) { const c = getCoords(e); scratchAt(c.x, c.y); } }, { passive: false });
+    window.addEventListener('touchend', () => { isScratching = false; });
+
+    window.addEventListener('load', () => {
+      initScratchCard();
+    });
+
+    // 6. GOOGLE CALENDAR INTEGRATION
+    function addGoogleCalendar() {
+      const title = encodeURIComponent("Wedding: Sanju Naik & Ashwini Rathod");
+      const dates = "20261122T040100Z/20261122T083000Z"; // 9:31 AM IST to 2:00 PM IST
+      const details = encodeURIComponent("Sumuhurtham: Sunday, 22nd Nov 2026 at 9:31 AM (Dhanur Lagnam).\nVenue: Sri Balaji Gardens, Ramchandrapuram, Hyderabad.\nInvited by Sri Amgoth Haria.");
+      const location = encodeURIComponent("Sri Balaji Gardens, Beside D-Mart, Ramchandrapuram, Hyderabad, Telangana");
+      
+      const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
+      window.open(gcalUrl, '_blank');
+    }
+
+    // 7. DIRECT WHATSAPP SHARING
+    function shareWhatsApp() {
+      const message = encodeURIComponent(
+        "✨ *॥ శ్రీరస్తు • శుభమస్తు • అవిఘ్నమస్తు ॥* ✨\n\n" +
+        "We cordially invite you to join us in celebrating the marriage of our son:\n\n" +
+        "🤵 *Chi. Sanju Naik*\n" +
+        "      _with_\n" +
+        "👰 *Chi. La. Sow. Ashwini Rathod*\n\n" +
+        "🗓 *Sumuhurtham:* Sunday, 22nd November 2026 at 9:31 AM (Dhanur Lagnam)\n" +
+        "📍 *Venue:* Sri Balaji Gardens, Beside D-Mart, Ramchandrapuram, Hyderabad\n" +
+        "🗺 *Google Maps Link:* https://maps.google.com/?q=Sri+Balaji+Gardens+Ramchandrapuram+Hyderabad\n\n" +
+        "Invited by Sri Amgoth Haria (Late Smt. Amgoth Laxmi)\n" +
+        "Ph: 9849668796 / 9949157796\n\n" +
+        "Your presence and blessings are our greatest gift! 🙏💐"
+      );
+      window.open(`https://api.whatsapp.com/send?text=${message}`, '_blank');
+    }
+  </script>
+
+</body>
+</html>
