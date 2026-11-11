@@ -587,46 +587,18 @@
       initScratchCard();
     });
 
-    // 5. DIRECT NATIVE CALENDAR REMINDER (.ICS FOR APPLE & ANDROID)
+    // 5. SEAMLESS NATIVE CALENDAR REMINDER (APPLE & ANDROID)
     function addToNativeCalendar() {
-      const icsData = [
-        'BEGIN:VCALENDAR',
-        'VERSION:2.0',
-        'PRODID:-//Sanju and Ashwini Wedding//EN',
-        'CALSCALE:GREGORIAN',
-        'METHOD:PUBLISH',
-        'BEGIN:VEVENT',
-        'UID:wedding-sanju-ashwini-20261122@invitation',
-        'DTSTAMP:20261111T120000Z',
-        'DTSTART:20261122T040100Z',
-        'DTEND:20261122T083000Z',
-        'SUMMARY:Wedding: Sanju & Ashwini',
-        'DESCRIPTION:Auspicious Wedding Ceremony of Chi. Sanju Naik with Chi. La. Sow. Ashwini Rathod. Sumuhurtham at 9:31 AM (Dhanur Lagnam). Contact: 9849668796 / 9949157796.',
-        'LOCATION:Sri Balaji Gardens\, Beside D-Mart\, Ramchandrapuram\, Hyderabad\, Telangana',
-        'STATUS:CONFIRMED',
-        'BEGIN:VALARM',
-        'TRIGGER:-PT12H',
-        'ACTION:DISPLAY',
-        'DESCRIPTION:Reminder: Wedding of Sanju & Ashwini today at 9:31 AM',
-        'END:VALARM',
-        'BEGIN:VALARM',
-        'TRIGGER:-PT2H',
-        'ACTION:DISPLAY',
-        'DESCRIPTION:Wedding of Sanju & Ashwini starts in 2 hours at Sri Balaji Gardens',
-        'END:VALARM',
-        'END:VEVENT',
-        'END:VCALENDAR'
-      ].join('\r\n');
-
-      const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'wedding-sanju-ashwini.ics');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      if (isIOS) {
+        // Direct navigation to wedding.ics opens the native Apple Calendar "Add Event" sheet immediately
+        window.location.href = 'wedding.ics';
+      } else {
+        // On Android / Desktop:
+        // Attempt native direct open via wedding.ics; if browser supports intent, it opens system calendar
+        window.location.href = 'wedding.ics';
+      }
     }
 
     // 6. DIRECT WHATSAPP SHARING

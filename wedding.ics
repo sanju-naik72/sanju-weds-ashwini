@@ -1,0 +1,26 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Sanju and Ashwini Wedding//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:wedding-sanju-ashwini-20261122@invitation
+DTSTAMP:20261111T120000Z
+DTSTART:20261122T040100Z
+DTEND:20261122T083000Z
+SUMMARY:Wedding: Sanju & Ashwini
+DESCRIPTION:Auspicious Wedding Ceremony of Chi. Sanju Naik with Chi. La. Sow. Ashwini Rathod. Sumuhurtham at 9:31 AM (Dhanur Lagnam). Contact: 9849668796 / 9949157796.
+LOCATION:Sri Balaji Gardens, Beside D-Mart, Ramchandrapuram, Hyderabad, Telangana
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT12H
+ACTION:DISPLAY
+DESCRIPTION:Reminder: Wedding of Sanju & Ashwini today at 9:31 AM
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:Wedding of Sanju & Ashwini starts in 2 hours at Sri Balaji Gardens
+END:VALARM
+END:VEVENT
+END:VCALENDAR
